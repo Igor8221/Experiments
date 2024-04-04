@@ -1,0 +1,232 @@
+{% extends "base.html" %}
+
+{%block body%}
+<h1>Главная страница сайта</h1>
+<h1>Таблица с задачи</h1>
+
+<button id="getTask">Посмотреть задачи</button>
+
+<ul id="ulTask">
+
+</ul>
+
+
+<form>
+    <label>Название</label>
+    <input type="text" id="taskFormTitle">
+    <label>Описание</label>
+    <input type="text" id="taskFormDescription">
+    <button id="taskFormCreateBtn">Создать задачу</button>
+</form>
+
+
+
+
+
+<script>
+    const reqGetListTask = 'http://127.0.0.1:8000/api/tasks/list/';
+    const reqPostCreateTask = 'http://127.0.0.1:8000/api/tasks/create/';
+    const taskObject = {
+        list_task: [],
+    }
+
+    // Делает GET запрос на URL(reqGetListTask) где получаем список задач и присвоеваем данный список свойству обьета list_task обьекта taskObject
+    /*fetch (new Request(reqGetListTask)).then((response) =>
+     response.json().then((data) => {
+        taskObject.list_task.push(data)
+        taskObject.list_task = data
+        
+        ulTask = document.getElementById('ulTask');
+        for (let i = 0; i < taskObject.list_task.length; i++){
+            element_li = document.createElement('li');
+            element_id = document.createElement('p');
+            element_title = document.createElement('h2');
+            element_description = document.createElement('p');
+            element_status = document.createElement('p');
+            element_title = taskObject.list_task[i].title;
+            element_li.append(element_title);
+            ulTask.append(element_li)
+        }
+    
+     })
+    )
+    */
+
+    const getTask = document.getElementById('getTask');
+    getTask.addEventListener('click', renderTasks)
+
+    function renderTasks() {
+        //Блок запроса и получения данных
+        fetch(reqGetListTask).then(response => response.json()).then(
+            tasks => {
+                const ulTask = document.getElementById('ulTask');
+                for (let i = 0; i < tasks.length; i++) {
+                    //Создаем элементы, которым в будующем присвоем значение
+                    element_li = document.createElement('li');
+                    element_title = document.createElement('h3');
+                    element_description = document.createElement('p');
+                    element_status = document.createElement('p');
+                    element_button_delete = document.createElement('button');
+                    //Присваеваем значение из переменной tasks
+                    element_button_delete.textContent = 'Удалить';
+                    element_button_delete.style.background = 'red';
+                    element_button_delete.id = `task_id=${tasks[i].id}`
+                    element_button_delete.addEventListener('click', function (event) {
+                        event.preventDefault();
+                        url = 'http://127.0.0.1:8000/api/tasks/delete/' + '?' + this.id
+                        fetch(url, {
+                            method: 'DELETE'
+                        })
+                    })
+                    element_title.textContent = tasks[i].title;
+                    element_description.textContent = tasks[i].description;
+                    element_status.textContent = tasks[i].status;
+                    element_div = document.createElement('div');
+                    element_div.append(element_title,
+                        element_description,
+                        element_status,
+                        element_button_delete);
+                    element_li.append(element_div);
+                    ulTask.append(element_li);
+
+                }
+            }
+        )
+    }
+
+    const taskFormCreateBtn = document.getElementById('taskFormCreateBtn');
+    taskFormCreateBtn.addEventListener('click', function (event) {
+        event.preventDefault();
+        let taskFormTitle = document.getElementById('taskFormTitle');
+        let taskFormDescription = document.getElementById('taskFormDescription');
+        data = { 'title': taskFormTitle.value, 'description': taskFormDescription.value };
+
+        fetch(reqPostCreateTask, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+        })
+        taskFormTitle.value = '';
+        taskFormDescription.value = '';
+        alert('Задача создалась!')
+    })
+
+
+
+
+
+
+</script>
+
+
+
+
+
+{%endblock%}
+
+<!-- {% extends "base.html" %}
+
+{% block body %}
+<h1>Главная страница сайта</h1>
+<h1>Таблица с задачами</h1>
+
+<button id="getTask">Посмотреть задачи</button>
+
+<ul id="ulTask">
+    
+</ul>
+
+<form id="taskForm">
+    <label for="taskFormTitle">Название</label>
+    <input type="text" id="taskFormTitle">
+    <label for="taskFormDescription">Описание</label>
+    <input type="text" id="taskFormDescription">
+    <button type="submit" id="taskFormCreateBtn">Создать задачу</button>
+</form>
+
+<script>
+    const reqGetListTask = 'http://127.0.0.1:8000/api/tasks/list/';
+    const reqPostCreateTask = 'http://127.0.0.1:8000/api/tasks/create/';
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const getTaskBtn = document.getElementById('getTask');
+        const taskForm = document.getElementById('taskForm');
+
+        getTaskBtn.addEventListener('click', renderTasks);
+        taskForm.addEventListener('submit', createTask);
+    });
+
+    function renderTasks() {
+        fetch(reqGetListTask)
+            .then(response => response.json())
+            .then(tasks => {
+                const ulTask = document.getElementById('ulTask');
+                ulTask.innerHTML = ''; // Очистим список перед добавлением новых задач
+
+                tasks.forEach(task => {
+                    const li = document.createElement('li');
+                    const title = document.createElement('h3');
+                    const description = document.createElement('p');
+                    const status = document.createElement('p');
+                    const deleteBtn = document.createElement('button');
+
+                    title.textContent = task.title;
+                    description.textContent = task.description;
+                    status.textContent = task.status;
+                    deleteBtn.textContent = 'Удалить';
+                    deleteBtn.style.background = 'red';
+
+                    deleteBtn.addEventListener('click', () => deleteTask(task.id));
+
+                    li.append(title, description, status, deleteBtn);
+                    ulTask.appendChild(li);
+                });
+            })
+            .catch(error => console.error('Ошибка при получении задач:', error));
+    }
+
+    function createTask(event) {
+        event.preventDefault();
+        const taskFormTitle = document.getElementById('taskFormTitle').value;
+        const taskFormDescription = document.getElementById('taskFormDescription').value;
+
+        if (!taskFormTitle || !taskFormDescription) {
+            alert('Заполните все поля формы!');
+            return;
+        }
+
+        const data = {
+            title: taskFormTitle,
+            description: taskFormDescription
+        };
+
+        fetch(reqPostCreateTask, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+        })
+            .then(() => {
+                document.getElementById('taskForm').reset(); // Очистим форму после создания задачи
+                renderTasks(); // После создания задачи обновим список
+                alert('Задача создана успешно!');
+            })
+            .catch(error => console.error('Ошибка при создании задачи:', error));
+    }
+
+    function deleteTask(taskId) {
+        const url = `http://127.0.0.1:8000/api/tasks/delete/?task_id=${taskId}`;
+        fetch(url, {
+            method: 'DELETE'
+        })
+            .then(() => {
+                renderTasks(); // После удаления задачи обновим список
+                alert('Задача удалена успешно!');
+            })
+            .catch(error => console.error('Ошибка при удалении задачи:', error));
+    }
+</script>
+{% endblock %} -->
